@@ -382,6 +382,18 @@ function formatDate(dateStr) { if (!dateStr) return ''; const d = new Date(dateS
 function escHtml(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // OAuth 콜백 처리
+function saveApiKey() {
+  const key = document.getElementById('anthropicKey').value.trim();
+  if (key) localStorage.setItem('mailmind_apikey', key);
+}
+
+function loadApiKey() {
+  const saved = localStorage.getItem('mailmind_apikey');
+  if (saved) document.getElementById('anthropicKey').value = saved;
+}
+
+document.getElementById('anthropicKey').addEventListener('input', saveApiKey);
+
 function handleOAuthCallback() {
   const hash = window.location.hash.substring(1);
   const params = new URLSearchParams(hash);
@@ -393,6 +405,7 @@ function handleOAuthCallback() {
     document.getElementById('mainScreen').classList.remove('hidden');
     document.getElementById('statusDot').className = 'status-dot connected';
     getUserInfo();
+    loadApiKey();
   }
 }
 
