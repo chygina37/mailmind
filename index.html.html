@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MailMind — AI Email Auto Reply</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0f;
+    --surface: #161618;
+    --surface2: #1e1e21;
+    --border: #2a2a2e;
+    --accent: #c8f060;
+    --accent2: #6cf0c0;
+    --text: #f0efe8;
+    --muted: #888884;
+    --danger: #f06060;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* 배경 그리드 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(200,240,96,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,240,96,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* 헤더 */
+  header { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 3rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+  .logo { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--accent); letter-spacing: -0.5px; }
+  .logo-sub { font-size: 13px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); transition: background 0.3s; }
+  .status-dot.connected { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .lang-switch { display: flex; gap: 4px; margin-left: auto; align-items: center; }
+  .lang-switch button { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .lang-switch button.active { background: var(--accent); border-color: var(--accent); color: #0e0e0f; font-weight: 500; }
+
+  /* 설정 패널 */
+  .setup-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+  .setup-panel h2 { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 0.5rem; color: var(--text); }
+  .setup-panel p { font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.6; }
+
+  .input-row { display: flex; gap: 10px; margin-bottom: 1rem; }
+  .input-group { flex: 1; }
+  .input-group label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; }
+  .input-group input, .input-group textarea, .input-group select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-group input:focus, .input-group textarea:focus { border-color: var(--accent); }
+  .input-group textarea { resize: vertical; min-height: 70px; line-height: 1.6; }
+
+  /* 토글 버튼 그룹 */
+  .toggle-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .toggle-btn {
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: #0e0e0f; font-weight: 500; }
+
+  /* 버튼 */
+  .btn {
+    padding: 11px 24px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+  }
+  .btn-primary { background: var(--accent); color: #0e0e0f; }
+  .btn-primary:hover { background: #d4f570; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+  .btn-outline:hover { border-color: var(--accent2); color: var(--accent2); }
+  .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: white; }
+
+  /* 이메일 목록 */
+  .email-section { margin-top: 2rem; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .section-header h2 { font-family: 'DM Serif Display', serif; font-size: 20px; }
+  .badge { background: var(--accent); color: #0e0e0f; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 10px; }
+
+  .email-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .email-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .email-card:hover { border-color: #3a3a3e; }
+  .email-card.selected { border-color: var(--accent); }
+
+  .email-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+  }
+  .email-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 500;
+    flex-shrink: 0;
+    color: var(--accent2);
+    border: 1px solid var(--border);
+  }
+  .email-meta { flex: 1; min-width: 0; }
+  .email-from { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .email-subject { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .email-date { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
+  /* 답장 영역 */
+  .reply-area {
+    border-top: 1px solid var(--border);
+    padding: 16px;
+    display: none;
+  }
+  .reply-area.open { display: block; }
+  .reply-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; }
+  .reply-text {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    resize: vertical;
+    min-height: 120px;
+    outline: none;
+  }
+  .reply-text:focus { border-color: var(--accent); }
+  .reply-actions { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; }
+
+  /* 로딩 */
+  .loading { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; padding: 1rem 0; }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 알림 */
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--text);
+    z-index: 100;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--accent); color: var(--accent); }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+
+  /* 빈 상태 */
+  .empty-state { text-align: center; padding: 3rem; color: var(--muted); }
+  .empty-state .icon { font-size: 40px; margin-bottom: 1rem; opacity: 0.3; }
+  .empty-state p { font-size: 14px; }
+
+  .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+  @media (max-width: 600px) {
+    .input-row { flex-direction: column; }
+    .reply-actions { flex-wrap: wrap; }
+    .btn { font-size: 12px; padding: 9px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <span class="logo">MailMind</span>
+    <span class="logo-sub" id="txt-subtitle">AI 자동 응답</span>
+    <div class="lang-switch" style="margin-left:auto;">
+      <button class="active" onclick="setUiLang('ko')">한국어</button>
+      <button onclick="setUiLang('en')">English</button>
+    </div>
+    <div class="status-dot" id="statusDot" style="margin-left:12px;"></div>
+  </header>
+
+  <!-- 설정 패널 -->
+  <div class="setup-panel" id="setupPanel">
+    <h2 id="txt-title">시작하기</h2>
+    <p id="txt-desc">Anthropic API 키와 Gmail API 정보를 입력하면 이메일을 자동으로 읽고 AI 답장을 생성합니다.</p>
+
+    <div class="input-row">
+      <div class="input-group">
+        <label id="txt-apikey">Anthropic API 키</label>
+        <input type="password" id="anthropicKey" placeholder="sk-ant-..." />
+      </div>
+    </div>
+
+    <div class="input-row">
+      <div class="input-group">
+        <label>Gmail API Access Token</label>
+        <input type="password" id="gmailToken" placeholder="Gmail OAuth Access Token" />
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="input-row">
+      <div class="input-group">
+        <label id="txt-tone">응답 톤</label>
+        <div class="toggle-group" id="toneGroup">
+          <button class="toggle-btn active" data-val="professional" data-ko="전문적" data-en="Professional">전문적</button>
+          <button class="toggle-btn" data-val="friendly" data-ko="친근한" data-en="Friendly">친근한</button>
+          <button class="toggle-btn" data-val="concise" data-ko="간결한" data-en="Concise">간결한</button>
+          <button class="toggle-btn" data-val="formal" data-ko="격식체" data-en="Formal">격식체</button>
+        </div>
+      </div>
+      <div class="input-group">
+        <label id="txt-replylang">응답 언어</label>
+        <div class="toggle-group" id="langGroup">
+          <button class="toggle-btn active" data-val="same" data-ko="수신 언어와 동일" data-en="Same as received">수신 언어와 동일</button>
+          <button class="toggle-btn" data-val="ko" data-ko="한국어" data-en="Korean">한국어</button>
+          <button class="toggle-btn" data-val="en" data-ko="영어" data-en="English">영어</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-row" style="margin-top:1rem;">
+      <div class="input-group">
+        <label id="txt-instructions">추가 지침 (선택)</label>
+        <textarea id="instructions" placeholder="예: 이메일 끝에 항상 '감사합니다, 강레오' 를 붙여주세요" id="instructions"></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:1rem;">
+      <button class="btn btn-primary" id="txt-connect" onclick="connectAndFetch()">연결 후 이메일 불러오기</button>
+    </div>
+  </div>
+
+  <!-- 이메일 목록 -->
+  <div class="email-section" id="emailSection" style="display:none;">
+    <div class="section-header">
+      <h2 id="txt-inbox">받은 이메일</h2>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="badge" id="emailBadge">0</span>
+        <button class="btn btn-outline" id="txt-alldraft" style="font-size:12px;padding:6px 14px;" onclick="fetchAllDrafts()">전체 드래프트 생성</button>
+        <button class="btn btn-outline" id="txt-refresh" style="font-size:12px;padding:6px 14px;" onclick="refresh()">새로고침</button>
+      </div>
+    </div>
+    <div class="email-list" id="emailList"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let config = { tone: 'professional', lang: 'same', instructions: '' };
+let emails = [];
+let gmailToken = '';
+let anthropicKey = '';
+let uiLang = 'ko';
+
+const i18n = {
+  ko: {
+    subtitle: 'AI 자동 응답',
+    title: '시작하기',
+    desc: 'Anthropic API 키와 Gmail API 정보를 입력하면 이메일을 자동으로 읽고 AI 답장을 생성합니다.',
+    apikey: 'Anthropic API 키',
+    tone: '응답 톤',
+    replylang: '응답 언어',
+    instructions: '추가 지침 (선택)',
+    instructionsPlaceholder: "예: 이메일 끝에 항상 '감사합니다, 강레오' 를 붙여주세요",
+    connect: '연결 후 이메일 불러오기',
+    inbox: '받은 이메일',
+    alldraft: '전체 드래프트 생성',
+    refresh: '새로고침',
+    loading: '이메일 불러오는 중...',
+    generating: '답장 생성 중...',
+    generate: 'AI 답장 생성',
+    regenerate: '다시 생성',
+    savedraft: '드래프트 저장',
+    draftok: '드래프트 저장 완료! Gmail 임시보관함을 확인하세요',
+    alldraftok: '개 이메일 AI 답장 생성 완료!',
+    nomail: '새 이메일이 없습니다',
+    errkeys: 'API 키와 Gmail Token을 입력해주세요',
+    errauth: 'Gmail 인증 실패',
+  },
+  en: {
+    subtitle: 'AI Auto Reply',
+    title: 'Get Started',
+    desc: 'Enter your Anthropic API key and Gmail token to automatically read emails and generate AI replies.',
+    apikey: 'Anthropic API Key',
+    tone: 'Reply Tone',
+    replylang: 'Reply Language',
+    instructions: 'Additional Instructions (optional)',
+    instructionsPlaceholder: "e.g. Always end emails with 'Best regards, Leo'",
+    connect: 'Connect & Fetch Emails',
+    inbox: 'Inbox',
+    alldraft: 'Generate All Drafts',
+    refresh: 'Refresh',
+    loading: 'Loading emails...',
+    generating: 'Generating reply...',
+    generate: 'Generate AI Reply',
+    regenerate: 'Regenerate',
+    savedraft: 'Save Draft',
+    draftok: 'Draft saved! Check your Gmail drafts folder.',
+    alldraftok: ' emails processed!',
+    nomail: 'No new emails',
+    errkeys: 'Please enter your API key and Gmail token',
+    errauth: 'Gmail authentication failed',
+  }
+};
+
+function t(key) { return i18n[uiLang][key] || key; }
+
+function setUiLang(lang) {
+  uiLang = lang;
+  document.querySelectorAll('.lang-switch button').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.lang-switch button[onclick="setUiLang('${lang}')"]`).classList.add('active');
+
+  document.getElementById('txt-subtitle').textContent = t('subtitle');
+  document.getElementById('txt-title').textContent = t('title');
+  document.getElementById('txt-desc').textContent = t('desc');
+  document.getElementById('txt-apikey').textContent = t('apikey');
+  document.getElementById('txt-tone').textContent = t('tone');
+  document.getElementById('txt-replylang').textContent = t('replylang');
+  document.getElementById('txt-instructions').textContent = t('instructions');
+  document.getElementById('instructions').placeholder = t('instructionsPlaceholder');
+  document.getElementById('txt-connect').textContent = t('connect');
+  document.getElementById('txt-inbox').textContent = t('inbox');
+  document.getElementById('txt-alldraft').textContent = t('alldraft');
+  document.getElementById('txt-refresh').textContent = t('refresh');
+
+  // 토글 버튼 텍스트
+  document.querySelectorAll('.toggle-btn[data-ko]').forEach(btn => {
+    btn.textContent = btn.dataset[lang] || btn.textContent;
+  });
+
+  renderEmails();
+}
+
+// 토글 그룹
+document.querySelectorAll('.toggle-group').forEach(group => {
+  group.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const id = group.id;
+      if (id === 'toneGroup') config.tone = btn.dataset.val;
+      if (id === 'langGroup') config.lang = btn.dataset.val;
+    });
+  });
+});
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+async function connectAndFetch() {
+  anthropicKey = document.getElementById('anthropicKey').value.trim();
+  gmailToken = document.getElementById('gmailToken').value.trim();
+  config.instructions = document.getElementById('instructions').value.trim();
+
+  if (!anthropicKey || !gmailToken) {
+    showToast(t('errkeys'), 'error');
+    return;
+  }
+  await fetchEmails();
+}
+
+async function refresh() {
+  config.instructions = document.getElementById('instructions').value.trim();
+  await fetchEmails();
+}
+
+async function fetchEmails() {
+  document.getElementById('emailList').innerHTML = `<div class="loading"><div class="spinner"></div>${t('loading')}</div>`;
+  document.getElementById('emailSection').style.display = 'block';
+
+  try {
+    const res = await fetch(
+      'https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=10&q=is:inbox newer_than:7d',
+      { headers: { Authorization: 'Bearer ' + gmailToken } }
+    );
+    if (!res.ok) throw new Error(t('errauth'));
+    const data = await res.json();
+    const messages = data.messages || [];
+
+    emails = [];
+    for (const m of messages.slice(0, 10)) {
+      const detail = await fetch(
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`,
+        { headers: { Authorization: 'Bearer ' + gmailToken } }
+      );
+      const d = await detail.json();
+      const headers = d.payload.headers;
+      emails.push({
+        id: m.id,
+        subject: headers.find(h => h.name === 'Subject')?.value || '(no subject)',
+        from: headers.find(h => h.name === 'From')?.value || 'Unknown',
+        date: headers.find(h => h.name === 'Date')?.value || '',
+        snippet: d.snippet || '',
+        reply: null,
+        loading: false
+      });
+    }
+
+    document.getElementById('statusDot').className = 'status-dot connected';
+    document.getElementById('emailBadge').textContent = emails.length;
+    renderEmails();
+
+  } catch (err) {
+    document.getElementById('emailList').innerHTML = `<div class="empty-state"><div class="icon">⚠</div><p>${err.message}</p></div>`;
+    showToast(err.message, 'error');
+  }
+}
+
+function renderEmails() {
+  const list = document.getElementById('emailList');
+  if (emails.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">✉</div><p>${t('nomail')}</p></div>`;
+    return;
+  }
+  list.innerHTML = emails.map((e, i) => `
+    <div class="email-card" id="card-${i}">
+      <div class="email-header" onclick="toggleCard(${i})">
+        <div class="email-avatar">${getInitial(e.from)}</div>
+        <div class="email-meta">
+          <div class="email-from">${escHtml(cleanEmail(e.from))}</div>
+          <div class="email-subject">${escHtml(e.subject)}</div>
+        </div>
+        <div class="email-date">${formatDate(e.date)}</div>
+      </div>
+      <div class="reply-area" id="reply-${i}">
+        <div class="reply-label">AI Reply</div>
+        ${e.loading
+          ? `<div class="loading"><div class="spinner"></div>${t('generating')}</div>`
+          : e.reply
+            ? `<textarea class="reply-text" id="replyText-${i}">${escHtml(e.reply)}</textarea>
+               <div class="reply-actions">
+                 <button class="btn btn-outline" style="font-size:12px;padding:7px 14px;" onclick="regenerate(${i})">${t('regenerate')}</button>
+                 <button class="btn btn-primary" style="font-size:12px;padding:7px 14px;" onclick="saveDraft(${i})">${t('savedraft')}</button>
+               </div>`
+            : `<div style="text-align:center;padding:1rem;">
+                 <button class="btn btn-primary" onclick="generateReply(${i})">${t('generate')}</button>
+               </div>`
+        }
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleCard(i) {
+  const area = document.getElementById(`reply-${i}`);
+  area.classList.toggle('open');
+  document.getElementById(`card-${i}`).classList.toggle('selected');
+  if (area.classList.contains('open') && !emails[i].reply && !emails[i].loading) {
+    generateReply(i);
+  }
+}
+
+async function generateReply(i) {
+  const e = emails[i];
+  emails[i].loading = true;
+  renderEmails();
+  document.getElementById(`reply-${i}`).classList.add('open');
+
+  const toneMap = { professional: '전문적이고 정중한', friendly: '친근하고 따뜻한', concise: '간결하고 핵심만 담은', formal: '격식체의 공손한' };
+  const langMap = { same: '이메일과 같은 언어로', ko: '한국어로', en: '영어로' };
+
+  const prompt = `다음 이메일에 대한 답장을 작성해주세요.
+
+발신자: ${e.from}
+제목: ${e.subject}
+내용: ${e.snippet}
+
+요구사항:
+- 톤: ${toneMap[config.tone]}
+- 언어: ${langMap[config.lang]}
+${config.instructions ? '- 추가 지침: ' + config.instructions : ''}
+
+답장만 작성해주세요. 설명이나 메타 텍스트는 포함하지 마세요.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    emails[i].reply = data.content?.[0]?.text || '답장 생성 실패';
+  } catch (err) {
+    emails[i].reply = '오류가 발생했습니다: ' + err.message;
+  }
+  emails[i].loading = false;
+  renderEmails();
+  document.getElementById(`reply-${i}`).classList.add('open');
+}
+
+async function regenerate(i) {
+  emails[i].reply = null;
+  await generateReply(i);
+}
+
+async function saveDraft(i) {
+  const e = emails[i];
+  const replyText = document.getElementById(`replyText-${i}`)?.value || e.reply;
+  const fromEmail = e.from.match(/<(.+)>/)?.[1] || e.from;
+
+  try {
+    const raw = btoa(unescape(encodeURIComponent(
+      `To: ${fromEmail}\r\nSubject: Re: ${e.subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${replyText}`
+    ))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/drafts', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + gmailToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: { raw } })
+    });
+    if (!res.ok) throw new Error(t('savedraft') + ' failed');
+    showToast(t('draftok'), 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function fetchAllDrafts() {
+  for (let i = 0; i < emails.length; i++) {
+    if (!emails[i].reply) await generateReply(i);
+  }
+  showToast(`${emails.length}${t('alldraftok')}`, 'success');
+}
+
+function getInitial(from) {
+  const name = cleanEmail(from);
+  return name.charAt(0).toUpperCase();
+}
+
+function cleanEmail(from) {
+  return from.replace(/<.*>/, '').trim() || from;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
