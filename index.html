@@ -361,9 +361,12 @@ async function saveDraft(i) {
     const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/drafts', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: { raw } })
+      body: JSON.stringify({ message: { raw, threadId: e.id } })
     });
-    if (!res.ok) throw new Error('저장 실패');
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.error?.message || '저장 실패');
+    }
     showToast(t('draftok'), 'success');
   } catch(err) { showToast(err.message, 'error'); }
 }
