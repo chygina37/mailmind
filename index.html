@@ -192,8 +192,8 @@
         <div class="input-group">
           <label id="txt-campaign-lang">이메일 언어</label>
           <div class="toggle-group" id="campaignLangGroup">
-            <button class="toggle-btn active" data-lang="en" onclick="setCampaignLang('en')">영어</button>
-            <button class="toggle-btn" data-lang="ko" onclick="setCampaignLang('ko')">한국어</button>
+            <button class="toggle-btn active" data-lang="en" data-ko="영어" data-en="English" onclick="setCampaignLang('en')">영어</button>
+            <button class="toggle-btn" data-lang="ko" data-ko="한국어" data-en="Korean" onclick="setCampaignLang('ko')">한국어</button>
           </div>
         </div>
         <div class="input-group">
@@ -315,6 +315,7 @@ function setUiLang(lang) {
   document.getElementById('txt-campaign-responses').textContent = t('campaignResponses');
   document.getElementById('txt-campaign-alldraft').textContent = t('campaignAlldraft');
   document.getElementById('txt-campaign-lang').textContent = t('campaignLang');
+  document.querySelectorAll('#campaignLangGroup .toggle-btn').forEach(btn => { btn.textContent = btn.dataset[lang]; });
   document.getElementById('txt-campaign-fetch').textContent = t('campaignFetch');
   document.getElementById('campaignSubject').placeholder = t('campaignSubjectPlaceholder');
   renderEmails();
