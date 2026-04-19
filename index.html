@@ -217,7 +217,7 @@ Pestlo Team</textarea>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-primary" id="txt-campaign-fetch" onclick="fetchFormResponses()">📋 구글폼 응답 불러오기</button>
-          <a href="https://docs.google.com/forms/d/e/1FAIpQLSdaA6xcBD9y4OLsmPfGUW7yiHTKx8kizloQRWVkBxfcftGw7g/viewform?usp=header" target="_blank" class="btn btn-outline">📝 구글폼 열기</a>
+          <a href="https://docs.google.com/forms/d/e/1FAIpQLSdaA6xcBD9y4OLsmPfGUW7yiHTKx8kizloQRWVkBxfcftGw7g/viewform?usp=header" target="_blank" class="btn btn-outline" id="txt-campaign-open">📝 구글폼 열기</a>
         </div>
       </div>
 
@@ -264,7 +264,7 @@ const i18n = {
     campaignTemplate: '이메일 템플릿', campaignResponses: '구글폼 응답자',
     campaignAlldraft: '전체 드래프트 저장', campaignFetch: '📋 구글폼 응답 불러오기',
     campaignSubjectPlaceholder: '예: [Pestlo] 제품 발송 전 배송 정보 확인 요청',
-    campaignLang: '이메일 언어',
+    campaignLang: '이메일 언어', campaignOpen: '📝 구글폼 열기',
   },
   en: {
     subtitle: 'AI Auto Reply', loginTitle: 'Get started with Gmail',
@@ -282,7 +282,7 @@ const i18n = {
     campaignTemplate: 'Email Template', campaignResponses: 'Form Responses',
     campaignAlldraft: 'Save All Drafts', campaignFetch: '📋 Load Form Responses',
     campaignSubjectPlaceholder: 'e.g. [Pestlo] Shipping Info Confirmation',
-    campaignLang: 'Email Language',
+    campaignLang: 'Email Language', campaignOpen: '📝 Open Google Form',
   }
 };
 
@@ -318,6 +318,7 @@ function setUiLang(lang) {
   document.getElementById('txt-campaign-lang').textContent = t('campaignLang');
   document.querySelectorAll('#campaignLangGroup .toggle-btn').forEach(btn => { btn.textContent = btn.dataset[lang]; });
   document.getElementById('txt-campaign-fetch').textContent = t('campaignFetch');
+  document.getElementById('txt-campaign-open').textContent = t('campaignOpen');
   document.getElementById('campaignSubject').placeholder = t('campaignSubjectPlaceholder');
   renderEmails();
 }
@@ -559,8 +560,9 @@ function switchTab(tab) {
 let formResponses = [];
 
 async function fetchFormResponses() {
-  const btn = document.querySelector('#tabCampaign .btn-primary');
-  btn.textContent = '불러오는 중...';
+  const btn = document.getElementById('txt-campaign-fetch');
+  const origText = btn.textContent;
+  btn.textContent = uiLang === 'ko' ? '불러오는 중...' : 'Loading...';
   btn.disabled = true;
   try {
     const res = await fetch(
@@ -569,7 +571,7 @@ async function fetchFormResponses() {
     );
     const data = await res.json();
     const rows = data.values || [];
-    if (rows.length < 2) { showToast('응답이 없습니다', 'error'); btn.textContent = '📋 구글폼 응답 불러오기'; btn.disabled = false; return; }
+    if (rows.length < 2) { showToast(uiLang === 'ko' ? '응답이 없습니다' : 'No responses found', 'error'); btn.textContent = origText; btn.disabled = false; return; }
     const headers = rows[0];
     formResponses = rows.slice(1).map(row => {
       const obj = {};
@@ -579,11 +581,11 @@ async function fetchFormResponses() {
     document.getElementById('campaignBadge').textContent = formResponses.length;
     document.getElementById('campaignSection').classList.remove('hidden');
     renderCampaignList();
-    showToast(`${formResponses.length}명의 응답을 불러왔어요!`, 'success');
+    showToast(`${formResponses.length}${uiLang === 'ko' ? '명의 응답을 불러왔어요!' : ' responses loaded!'}`, 'success');
   } catch(err) {
-    showToast('불러오기 실패: ' + err.message, 'error');
+    showToast((uiLang === 'ko' ? '불러오기 실패: ' : 'Failed: ') + err.message, 'error');
   }
-  btn.textContent = '📋 구글폼 응답 불러오기';
+  btn.textContent = origText;
   btn.disabled = false;
 }
 
