@@ -435,7 +435,7 @@ async function generateReply(i) {
   const langMap = { same: '이메일과 같은 언어로', ko: '한국어로', en: '영어로' };
   const prompt = `다음 이메일에 대한 답장을 작성해주세요.\n발신자: ${e.from}\n제목: ${e.subject}\n내용: ${e.snippet}\n요구사항:\n- 톤: ${toneMap[config.tone]}\n- 언어: ${langMap[config.lang]}\n${document.getElementById('instructions').value ? '- 추가 지침: ' + document.getElementById('instructions').value : ''}\n답장만 작성해주세요.`;
   try {
-    const res = await fetch('/.netlify/functions/claude', {
+    const res = await fetch('https://mailmind.kangleo1918.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] })
