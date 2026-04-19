@@ -190,6 +190,13 @@
           <input type="text" id="campaignSubject" placeholder="예: [Pestlo] 제품 발송 전 배송 정보 확인 요청" />
         </div>
         <div class="input-group">
+          <label id="txt-campaign-lang">이메일 언어</label>
+          <div class="toggle-group" id="campaignLangGroup">
+            <button class="toggle-btn active" data-lang="en" onclick="setCampaignLang('en')">영어</button>
+            <button class="toggle-btn" data-lang="ko" onclick="setCampaignLang('ko')">한국어</button>
+          </div>
+        </div>
+        <div class="input-group">
           <label id="txt-campaign-template">이메일 템플릿</label>
           <textarea id="campaignTemplate" style="min-height:200px;" placeholder="템플릿을 입력하세요...">Hi {Full Name} 😊
 
@@ -256,6 +263,7 @@ const i18n = {
     campaignTemplate: '이메일 템플릿', campaignResponses: '구글폼 응답자',
     campaignAlldraft: '전체 드래프트 저장', campaignFetch: '📋 구글폼 응답 불러오기',
     campaignSubjectPlaceholder: '예: [Pestlo] 제품 발송 전 배송 정보 확인 요청',
+    campaignLang: '이메일 언어',
   },
   en: {
     subtitle: 'AI Auto Reply', loginTitle: 'Get started with Gmail',
@@ -273,6 +281,7 @@ const i18n = {
     campaignTemplate: 'Email Template', campaignResponses: 'Form Responses',
     campaignAlldraft: 'Save All Drafts', campaignFetch: '📋 Load Form Responses',
     campaignSubjectPlaceholder: 'e.g. [Pestlo] Shipping Info Confirmation',
+    campaignLang: 'Email Language',
   }
 };
 
@@ -305,6 +314,7 @@ function setUiLang(lang) {
   document.getElementById('txt-campaign-template').textContent = t('campaignTemplate');
   document.getElementById('txt-campaign-responses').textContent = t('campaignResponses');
   document.getElementById('txt-campaign-alldraft').textContent = t('campaignAlldraft');
+  document.getElementById('txt-campaign-lang').textContent = t('campaignLang');
   document.getElementById('txt-campaign-fetch').textContent = t('campaignFetch');
   document.getElementById('campaignSubject').placeholder = t('campaignSubjectPlaceholder');
   renderEmails();
@@ -491,6 +501,48 @@ function handleOAuthCallback() {
     getUserInfo();
     loadApiKey();
   }
+}
+
+const campaignTemplates = {
+  en: `Hi {Full Name} 😊
+
+Thank you for applying to our campaign!
+We're excited to let you know that you've been selected as a product reviewer!
+
+Before we ship your product, please kindly confirm your shipping details below.
+
+Name: {Full Name}
+Address: {Shipping Address}, {City}, {State / Province} {Postal Code}
+Phone: {Phone Number}
+
+(※ Please note that the above information is specific to each influencer.)
+If there are any corrections needed, please reply to this email.
+
+Thank you,
+Pestlo Team`,
+  ko: `안녕하세요, {Full Name}님 😊
+
+이번 캠페인에 지원해 주셔서 감사합니다.
+제품 리뷰어로 선정되신 것을 축하드립니다!
+
+제품 발송 전, 아래 배송 정보를 확인 부탁드립니다.
+
+이름: {Full Name}
+주소: {Shipping Address}, {City}, {State / Province} {Postal Code}
+전화번호: {Phone Number}
+
+(※ 위 정보는 각 인플루언서별로 상이합니다.)
+확인 후 이상이 있으시면 회신 부탁드립니다.
+
+감사합니다.
+Pestlo 팀 드림`
+};
+
+function setCampaignLang(lang) {
+  document.querySelectorAll('#campaignLangGroup .toggle-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`#campaignLangGroup [data-lang="${lang}"]`).classList.add('active');
+  document.getElementById('campaignTemplate').value = campaignTemplates[lang];
+  if (formResponses.length > 0) renderCampaignList();
 }
 
 // 탭 전환
