@@ -209,7 +209,7 @@
 Pestlo 팀 드림</textarea>
         </div>
         <div style="display:flex;gap:8px;">
-          <button class="btn btn-primary" onclick="fetchFormResponses()">📋 구글폼 응답 불러오기</button>
+          <button class="btn btn-primary" id="txt-campaign-fetch" onclick="fetchFormResponses()">📋 구글폼 응답 불러오기</button>
         </div>
       </div>
 
@@ -255,6 +255,7 @@ const i18n = {
     campaignTitle: '캠페인 이메일 설정', campaignSubject: '이메일 제목',
     campaignTemplate: '이메일 템플릿', campaignResponses: '구글폼 응답자',
     campaignAlldraft: '전체 드래프트 저장', campaignFetch: '📋 구글폼 응답 불러오기',
+    campaignSubjectPlaceholder: '예: [Pestlo] 제품 발송 전 배송 정보 확인 요청',
   },
   en: {
     subtitle: 'AI Auto Reply', loginTitle: 'Get started with Gmail',
@@ -271,6 +272,7 @@ const i18n = {
     campaignTitle: 'Campaign Email Settings', campaignSubject: 'Email Subject',
     campaignTemplate: 'Email Template', campaignResponses: 'Form Responses',
     campaignAlldraft: 'Save All Drafts', campaignFetch: '📋 Load Form Responses',
+    campaignSubjectPlaceholder: 'e.g. [Pestlo] Shipping Info Confirmation',
   }
 };
 
@@ -303,6 +305,8 @@ function setUiLang(lang) {
   document.getElementById('txt-campaign-template').textContent = t('campaignTemplate');
   document.getElementById('txt-campaign-responses').textContent = t('campaignResponses');
   document.getElementById('txt-campaign-alldraft').textContent = t('campaignAlldraft');
+  document.getElementById('txt-campaign-fetch').textContent = t('campaignFetch');
+  document.getElementById('campaignSubject').placeholder = t('campaignSubjectPlaceholder');
   renderEmails();
 }
 
