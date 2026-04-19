@@ -455,7 +455,8 @@ async function saveDraft(i) {
   const replyText = document.getElementById(`replyText-${i}`)?.value || e.reply;
   const fromEmail = e.from.match(/<(.+)>/)?.[1] || e.from;
   try {
-    const raw = btoa(unescape(encodeURIComponent(`To: ${fromEmail}\r\nSubject: Re: ${e.subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${replyText}`))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    const encodedSubject = `=?UTF-8?B?${btoa(unescape(encodeURIComponent('Re: ' + e.subject)))}?=`;
+    const raw = btoa(unescape(encodeURIComponent(`To: ${fromEmail}\r\nSubject: ${encodedSubject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${replyText}`))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/drafts', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
@@ -639,8 +640,9 @@ async function saveCampaignDraft(i) {
   const body = fillTemplate(template, r);
   if (!email) { showToast('이메일 주소가 없습니다', 'error'); return; }
   try {
+    const encodedSubject = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
     const raw = btoa(unescape(encodeURIComponent(
-      `To: ${email}\r\nSubject: ${subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}`
+      `To: ${email}\r\nSubject: ${encodedSubject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}`
     ))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/drafts', {
       method: 'POST',
