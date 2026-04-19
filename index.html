@@ -184,13 +184,13 @@
     <!-- 캠페인 발송 탭 -->
     <div id="tabCampaign" class="hidden">
       <div class="setup-panel">
-        <h3>캠페인 이메일 설정</h3>
+        <h3 id="txt-campaign-title">캠페인 이메일 설정</h3>
         <div class="input-group">
-          <label>이메일 제목</label>
+          <label id="txt-campaign-subject">이메일 제목</label>
           <input type="text" id="campaignSubject" placeholder="예: [Pestlo] 제품 발송 전 배송 정보 확인 요청" />
         </div>
         <div class="input-group">
-          <label>이메일 템플릿</label>
+          <label id="txt-campaign-template">이메일 템플릿</label>
           <textarea id="campaignTemplate" style="min-height:200px;" placeholder="템플릿을 입력하세요...">안녕하세요, {Full Name}님 😊
 
 이번 캠페인에 지원해 주셔서 감사합니다.
@@ -215,10 +215,10 @@ Pestlo 팀 드림</textarea>
 
       <div id="campaignSection" class="hidden">
         <div class="section-header">
-          <h2>구글폼 응답자</h2>
+          <h2 id="txt-campaign-responses">구글폼 응답자</h2>
           <div style="display:flex;gap:8px;align-items:center;">
             <span class="badge" id="campaignBadge">0</span>
-            <button class="btn btn-outline btn-sm" onclick="saveAllCampaignDrafts()">전체 드래프트 저장</button>
+            <button class="btn btn-outline btn-sm" onclick="saveAllCampaignDrafts()" id="txt-campaign-alldraft">전체 드래프트 저장</button>
           </div>
         </div>
         <div class="email-list" id="campaignList"></div>
@@ -252,6 +252,9 @@ const i18n = {
     draftok: '드래프트 저장 완료! Gmail 임시보관함을 확인하세요', alldraftok: '개 이메일 처리 완료!',
     nomail: '새 이메일이 없습니다', errapi: 'Anthropic API 키를 입력해주세요',
     tabInbox: '받은 이메일', tabCampaign: '캠페인 발송',
+    campaignTitle: '캠페인 이메일 설정', campaignSubject: '이메일 제목',
+    campaignTemplate: '이메일 템플릿', campaignResponses: '구글폼 응답자',
+    campaignAlldraft: '전체 드래프트 저장', campaignFetch: '📋 구글폼 응답 불러오기',
   },
   en: {
     subtitle: 'AI Auto Reply', loginTitle: 'Get started with Gmail',
@@ -265,6 +268,9 @@ const i18n = {
     draftok: 'Draft saved! Check your Gmail drafts.', alldraftok: ' emails processed!',
     nomail: 'No new emails', errapi: 'Please enter your Anthropic API key',
     tabInbox: 'Inbox', tabCampaign: 'Campaign Send',
+    campaignTitle: 'Campaign Email Settings', campaignSubject: 'Email Subject',
+    campaignTemplate: 'Email Template', campaignResponses: 'Form Responses',
+    campaignAlldraft: 'Save All Drafts', campaignFetch: '📋 Load Form Responses',
   }
 };
 
@@ -292,6 +298,11 @@ function setUiLang(lang) {
   document.querySelectorAll('.toggle-btn[data-ko]').forEach(btn => { btn.textContent = btn.dataset[lang] || btn.textContent; });
   document.getElementById('txt-tab-inbox').textContent = t('tabInbox');
   document.getElementById('txt-tab-campaign').textContent = t('tabCampaign');
+  document.getElementById('txt-campaign-title').textContent = t('campaignTitle');
+  document.getElementById('txt-campaign-subject').textContent = t('campaignSubject');
+  document.getElementById('txt-campaign-template').textContent = t('campaignTemplate');
+  document.getElementById('txt-campaign-responses').textContent = t('campaignResponses');
+  document.getElementById('txt-campaign-alldraft').textContent = t('campaignAlldraft');
   renderEmails();
 }
 
