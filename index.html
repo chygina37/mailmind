@@ -575,10 +575,10 @@ async function fetchFormResponses() {
     const headers = rows[0];
     formResponses = rows.slice(1).map(row => {
       const obj = {};
-      headers.forEach((h, i) => { obj[h.trim()] = row[i] || ''; });
+      headers.forEach((h, i) => { obj[h.trim()] = (row[i] || '').trim(); });
       return obj;
     });
-    console.log('Headers:', headers);
+    console.log('Headers:', headers.map(h => h.trim()));
     console.log('First response:', formResponses[0]);
     document.getElementById('campaignBadge').textContent = formResponses.length;
     document.getElementById('campaignSection').classList.remove('hidden');
