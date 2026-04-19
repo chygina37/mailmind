@@ -618,10 +618,10 @@ function renderCampaignList() {
         <div style="font-size:11px;color:var(--muted);">${escHtml(r['City'] || '')}</div>
       </div>
       <div class="influencer-details" id="idetail-${i}">
-        <div style="margin-bottom:8px;color:var(--text);font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">이메일 미리보기</div>
+        <div style="margin-bottom:8px;color:var(--text);font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">${uiLang === 'ko' ? '이메일 미리보기' : 'Email Preview'}</div>
         <div class="preview-box">${escHtml(preview)}</div>
         <div class="draft-actions">
-          <button class="btn btn-primary btn-sm" onclick="saveCampaignDraft(${i})">드래프트 저장</button>
+          <button class="btn btn-primary btn-sm" onclick="saveCampaignDraft(${i})" id="txt-draft-btn-${i}">${uiLang === 'ko' ? '드래프트 저장' : 'Save Draft'}</button>
         </div>
       </div>
     </div>`;
