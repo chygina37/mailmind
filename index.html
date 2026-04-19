@@ -653,13 +653,13 @@ async function saveCampaignDraft(i) {
       body: JSON.stringify({ message: { raw } })
     });
     if (!res.ok) throw new Error('저장 실패');
-    showToast(`${r['Full Name']} 드래프트 저장 완료!`, 'success');
+    showToast(uiLang === 'ko' ? `${r['Full Name']} 드래프트 저장 완료!` : `${r['Full Name']} draft saved!`, 'success');
   } catch(err) { showToast(err.message, 'error'); }
 }
 
 async function saveAllCampaignDrafts() {
   for (let i = 0; i < formResponses.length; i++) await saveCampaignDraft(i);
-  showToast(`${formResponses.length}명 전체 드래프트 저장 완료!`, 'success');
+  showToast(uiLang === 'ko' ? `${formResponses.length}명 전체 드래프트 저장 완료!` : `All ${formResponses.length} drafts saved!`, 'success');
 }
 
 handleOAuthCallback();
