@@ -131,8 +131,8 @@
 
     <!-- 탭 -->
     <div style="display:flex;gap:8px;margin-bottom:1.5rem;">
-      <button class="tab-btn active" onclick="switchTab('inbox')" id="tab-inbox">📥 받은 이메일</button>
-      <button class="tab-btn" onclick="switchTab('campaign')" id="tab-campaign">📋 캠페인 발송</button>
+      <button class="tab-btn active" onclick="switchTab('inbox')" id="tab-inbox">📥 <span id="txt-tab-inbox">받은 이메일</span></button>
+      <button class="tab-btn" onclick="switchTab('campaign')" id="tab-campaign">📋 <span id="txt-tab-campaign">캠페인 발송</span></button>
     </div>
 
     <!-- 받은 이메일 탭 -->
@@ -251,6 +251,7 @@ const i18n = {
     generate: 'AI 답장 생성', regenerate: '다시 생성', savedraft: '드래프트 저장',
     draftok: '드래프트 저장 완료! Gmail 임시보관함을 확인하세요', alldraftok: '개 이메일 처리 완료!',
     nomail: '새 이메일이 없습니다', errapi: 'Anthropic API 키를 입력해주세요',
+    tabInbox: '받은 이메일', tabCampaign: '캠페인 발송',
   },
   en: {
     subtitle: 'AI Auto Reply', loginTitle: 'Get started with Gmail',
@@ -263,6 +264,7 @@ const i18n = {
     generate: 'Generate AI Reply', regenerate: 'Regenerate', savedraft: 'Save Draft',
     draftok: 'Draft saved! Check your Gmail drafts.', alldraftok: ' emails processed!',
     nomail: 'No new emails', errapi: 'Please enter your Anthropic API key',
+    tabInbox: 'Inbox', tabCampaign: 'Campaign Send',
   }
 };
 
@@ -288,6 +290,8 @@ function setUiLang(lang) {
   document.getElementById('txt-alldraft').textContent = t('alldraft');
   document.getElementById('txt-refresh').textContent = t('refresh');
   document.querySelectorAll('.toggle-btn[data-ko]').forEach(btn => { btn.textContent = btn.dataset[lang] || btn.textContent; });
+  document.getElementById('txt-tab-inbox').textContent = t('tabInbox');
+  document.getElementById('txt-tab-campaign').textContent = t('tabCampaign');
   renderEmails();
 }
 
