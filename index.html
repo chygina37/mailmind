@@ -575,9 +575,11 @@ async function fetchFormResponses() {
     const headers = rows[0];
     formResponses = rows.slice(1).map(row => {
       const obj = {};
-      headers.forEach((h, i) => { obj[h] = row[i] || ''; });
+      headers.forEach((h, i) => { obj[h.trim()] = row[i] || ''; });
       return obj;
     });
+    console.log('Headers:', headers);
+    console.log('First response:', formResponses[0]);
     document.getElementById('campaignBadge').textContent = formResponses.length;
     document.getElementById('campaignSection').classList.remove('hidden');
     renderCampaignList();
@@ -598,9 +600,11 @@ function renderCampaignList() {
   const template = document.getElementById('campaignTemplate').value;
   list.innerHTML = formResponses.map((r, i) => {
     const preview = fillTemplate(template, r);
-    const name = r['Full Name'] || '이름 없음';
-    const email = r['Email'] || '';
-    const insta = r['Instagram ID'] || '';
+    const keys = Object.keys(r);
+    console.log('Response keys:', keys, 'Values:', r);
+    const name = r['Full Name'] || r['full name'] || r['Name'] || r['이름'] || (keys.length > 1 ? r[keys[1]] : '') || '이름 없음';
+    const email = r['Email'] || r['email'] || r['이메일'] || (keys.length > 0 ? r[keys[keys.length-1]] : '') || '';
+    const insta = r['Instagram ID'] || r['instagram id'] || r['Instagram'] || '';
     return `
     <div class="influencer-card" id="icard-${i}">
       <div class="influencer-header" onclick="toggleInfluencer(${i})">
