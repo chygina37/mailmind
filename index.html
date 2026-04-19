@@ -636,7 +636,9 @@ async function saveCampaignDraft(i) {
   const r = formResponses[i];
   const email = r['Email'] || '';
   const template = document.getElementById('campaignTemplate').value;
-  const subject = document.getElementById('campaignSubject').value || 'Shipping Information Confirmation';
+  const activeLang = document.querySelector('#campaignLangGroup .toggle-btn.active')?.dataset.lang || 'en';
+  const defaultSubject = activeLang === 'ko' ? '배송 정보 확인 요청' : 'Shipping Information Confirmation';
+  const subject = document.getElementById('campaignSubject').value || defaultSubject;
   const body = fillTemplate(template, r);
   if (!email) { showToast('이메일 주소가 없습니다', 'error'); return; }
   try {
