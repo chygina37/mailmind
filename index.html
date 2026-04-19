@@ -322,6 +322,7 @@ function setUiLang(lang) {
   document.getElementById('txt-campaign-open').textContent = t('campaignOpen');
   document.getElementById('campaignSubject').placeholder = t('campaignSubjectPlaceholder');
   renderEmails();
+  if (formResponses.length > 0) renderCampaignList();
 }
 
 document.querySelectorAll('.toggle-group').forEach(group => {
