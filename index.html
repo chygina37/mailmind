@@ -636,7 +636,7 @@ async function saveCampaignDraft(i) {
   const r = formResponses[i];
   const email = r['Email'] || '';
   const template = document.getElementById('campaignTemplate').value;
-  const subject = document.getElementById('campaignSubject').value || '배송 정보 확인 요청';
+  const subject = document.getElementById('campaignSubject').value || 'Shipping Information Confirmation';
   const body = fillTemplate(template, r);
   if (!email) { showToast('이메일 주소가 없습니다', 'error'); return; }
   try {
