@@ -227,7 +227,11 @@ Pestlo Team</textarea>
           <h2 id="txt-campaign-responses">구글폼 응답자</h2>
           <div style="display:flex;gap:8px;align-items:center;">
             <span class="badge" id="campaignBadge">0</span>
-            <button class="btn btn-outline btn-sm" onclick="saveAllCampaignDrafts()" id="txt-campaign-alldraft">전체 드래프트 저장</button>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;">
+              <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)" style="width:14px;height:14px;cursor:pointer;" />
+              <span id="txt-select-all">전체 선택</span>
+            </label>
+            <button class="btn btn-primary btn-sm" onclick="saveSelectedDrafts()" id="txt-campaign-alldraft">선택 드래프트 저장</button>
           </div>
         </div>
         <div class="email-list" id="campaignList"></div>
@@ -265,7 +269,7 @@ const i18n = {
     campaignTemplate: '이메일 템플릿', campaignResponses: '구글폼 응답자',
     campaignAlldraft: '전체 드래프트 저장', campaignFetch: '📋 구글폼 응답 불러오기',
     campaignSubjectPlaceholder: '예: [Pestlo] 제품 발송 전 배송 정보 확인 요청',
-    campaignLang: '이메일 언어', campaignOpen: '📝 구글폼 열기',
+    campaignLang: '이메일 언어', campaignOpen: '📝 구글폼 열기', selectAll: '전체 선택', saveSelected: '선택 드래프트 저장',
   },
   en: {
     subtitle: 'AI Auto Reply', loginTitle: 'Get started with Gmail',
@@ -283,7 +287,7 @@ const i18n = {
     campaignTemplate: 'Email Template', campaignResponses: 'Form Responses',
     campaignAlldraft: 'Save All Drafts', campaignFetch: '📋 Load Form Responses',
     campaignSubjectPlaceholder: 'e.g. [Pestlo] Shipping Info Confirmation',
-    campaignLang: 'Email Language', campaignOpen: '📝 Open Google Form',
+    campaignLang: 'Email Language', campaignOpen: '📝 Open Google Form', selectAll: 'Select All', saveSelected: 'Save Selected Drafts',
   }
 };
 
@@ -320,6 +324,8 @@ function setUiLang(lang) {
   document.querySelectorAll('#campaignLangGroup .toggle-btn').forEach(btn => { btn.textContent = btn.dataset[lang]; });
   document.getElementById('txt-campaign-fetch').textContent = t('campaignFetch');
   document.getElementById('txt-campaign-open').textContent = t('campaignOpen');
+  document.getElementById('txt-select-all').textContent = t('selectAll');
+  document.getElementById('txt-campaign-alldraft').textContent = t('saveSelected');
   document.getElementById('campaignSubject').placeholder = t('campaignSubjectPlaceholder');
   renderEmails();
   if (formResponses.length > 0) renderCampaignList();
@@ -561,6 +567,7 @@ function switchTab(tab) {
 
 // 구글폼 응답 불러오기
 let formResponses = [];
+let savedDrafts = new Set();
 
 async function fetchFormResponses() {
   const btn = document.getElementById('txt-campaign-fetch');
@@ -604,29 +611,46 @@ function renderCampaignList() {
   list.innerHTML = formResponses.map((r, i) => {
     const preview = fillTemplate(template, r);
     const keys = Object.keys(r);
-    console.log('Response keys:', keys, 'Values:', r);
     const name = r['Full Name'] || r['full name'] || r['Name'] || r['이름'] || (keys.length > 1 ? r[keys[1]] : '') || '이름 없음';
     const email = r['Email'] || r['email'] || r['이메일'] || (keys.length > 0 ? r[keys[keys.length-1]] : '') || '';
     const insta = r['Instagram ID'] || r['instagram id'] || r['Instagram'] || '';
+    const saved = savedDrafts.has(i);
     return `
-    <div class="influencer-card" id="icard-${i}">
-      <div class="influencer-header" onclick="toggleInfluencer(${i})">
-        <div class="email-avatar-icon">${name.charAt(0).toUpperCase()}</div>
-        <div class="influencer-info">
-          <div class="influencer-name">${escHtml(name)} ${insta ? '<span style="color:var(--muted);font-weight:300;font-size:12px;">@' + escHtml(insta) + '</span>' : ''}</div>
-          <div class="influencer-email">${escHtml(email)}</div>
+    <div class="influencer-card" id="icard-${i}" style="${saved ? 'border-color: var(--accent); opacity:0.7;' : ''}">
+      <div class="influencer-header" style="gap:10px;">
+        <input type="checkbox" class="campaign-check" data-index="${i}" ${saved ? 'disabled' : ''} style="width:16px;height:16px;cursor:pointer;flex-shrink:0;" />
+        <div onclick="toggleInfluencer(${i})" style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer;">
+          <div class="email-avatar-icon">${name.charAt(0).toUpperCase()}</div>
+          <div class="influencer-info">
+            <div class="influencer-name">${escHtml(name)} ${insta ? '<span style="color:var(--muted);font-weight:300;font-size:12px;">@' + escHtml(insta) + '</span>' : ''} ${saved ? '<span style="color:var(--accent);font-size:11px;">✓ ' + (uiLang === 'ko' ? '저장됨' : 'Saved') + '</span>' : ''}</div>
+            <div class="influencer-email">${escHtml(email)}</div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);">${escHtml(r['City'] || '')}</div>
         </div>
-        <div style="font-size:11px;color:var(--muted);">${escHtml(r['City'] || '')}</div>
       </div>
       <div class="influencer-details" id="idetail-${i}">
         <div style="margin-bottom:8px;color:var(--text);font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">${uiLang === 'ko' ? '이메일 미리보기' : 'Email Preview'}</div>
         <div class="preview-box">${escHtml(preview)}</div>
         <div class="draft-actions">
-          <button class="btn btn-primary btn-sm" onclick="saveCampaignDraft(${i})" id="txt-draft-btn-${i}">${uiLang === 'ko' ? '드래프트 저장' : 'Save Draft'}</button>
+          <button class="btn btn-primary btn-sm" onclick="saveCampaignDraft(${i})" ${saved ? 'disabled style="opacity:0.5;"' : ''}>${saved ? (uiLang === 'ko' ? '저장 완료' : 'Saved') : (uiLang === 'ko' ? '드래프트 저장' : 'Save Draft')}</button>
         </div>
       </div>
     </div>`;
   }).join('');
+}
+
+function toggleSelectAll(checked) {
+  document.querySelectorAll('.campaign-check:not(:disabled)').forEach(cb => cb.checked = checked);
+}
+
+async function saveSelectedDrafts() {
+  const checked = [...document.querySelectorAll('.campaign-check:checked')].map(cb => parseInt(cb.dataset.index));
+  if (checked.length === 0) {
+    showToast(uiLang === 'ko' ? '선택된 항목이 없습니다' : 'No items selected', 'error');
+    return;
+  }
+  for (const i of checked) await saveCampaignDraft(i);
+  showToast(uiLang === 'ko' ? `${checked.length}개 드래프트 저장 완료!` : `${checked.length} drafts saved!`, 'success');
 }
 
 function toggleInfluencer(i) {
@@ -653,6 +677,8 @@ async function saveCampaignDraft(i) {
       body: JSON.stringify({ message: { raw } })
     });
     if (!res.ok) throw new Error('저장 실패');
+    savedDrafts.add(i);
+    renderCampaignList();
     showToast(uiLang === 'ko' ? `${r['Full Name']} 드래프트 저장 완료!` : `${r['Full Name']} draft saved!`, 'success');
   } catch(err) { showToast(err.message, 'error'); }
 }
