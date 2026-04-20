@@ -538,7 +538,8 @@ We're excited to let you know that you've been selected as a product reviewer!
 Before we ship your product, please kindly confirm your shipping details below.
 
 Name: {Full Name}
-Address: {Shipping Address}, {City}, {State / Province} {Postal Code}
+Address: {Shipping Address}
+Country: {Country of Residence}
 Phone: {Phone Number}
 
 (※ Please note that the above information is specific to each influencer.)
@@ -554,7 +555,8 @@ Pestlo Team`,
 제품 발송 전, 아래 배송 정보를 확인 부탁드립니다.
 
 이름: {Full Name}
-주소: {Shipping Address}, {City}, {State / Province} {Postal Code}
+주소: {Shipping Address}
+국가: {Country of Residence}
 전화번호: {Phone Number}
 
 (※ 위 정보는 각 인플루언서별로 상이합니다.)
@@ -645,23 +647,27 @@ function renderCampaignList() {
   const list = document.getElementById('campaignList');
   const template = document.getElementById('campaignTemplate').value;
   list.innerHTML = formResponses.map((r, i) => {
-    const preview = fillTemplate(template, r);
-    const keys = Object.keys(r);
-    const name = r['Full Name'] || r['full name'] || r['Name'] || r['이름'] || (keys.length > 1 ? r[keys[1]] : '') || '이름 없음';
-    const email = r['Email'] || r['email'] || r['이메일'] || (keys.length > 0 ? r[keys[keys.length-1]] : '') || '';
-    const insta = r['Instagram ID'] || r['instagram id'] || r['Instagram'] || '';
+    // 컬럼명 유연하게 인식
+    const name = r['Full Name'] || r['Full name'] || r['full name'] || r['Name'] || r['이름'] || '';
+    const email = r['Email Address'] || r['Email'] || r['email'] || r['이메일'] || '';
+    const insta = r['Instagram ID (put N/A if none)'] || r['Instagram ID'] || r['instagram id'] || r['Instagram'] || '';
+    const country = r['Country of Residence'] || r['Country'] || r['City'] || '';
+
+    // 템플릿 변수 통일 매핑
+    const mapped = { ...r, 'Full Name': name, 'Email': email, 'Instagram ID': insta };
+    const preview = fillTemplate(template, mapped);
     const saved = savedDrafts.has(email);
     return `
     <div class="influencer-card" id="icard-${i}" style="${saved ? 'border-color: var(--accent); opacity:0.7;' : ''}">
       <div class="influencer-header" style="gap:10px;">
         <input type="checkbox" class="campaign-check" data-index="${i}" ${saved ? 'disabled' : ''} style="width:16px;height:16px;cursor:pointer;flex-shrink:0;" />
         <div onclick="toggleInfluencer(${i})" style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer;">
-          <div class="email-avatar-icon">${name.charAt(0).toUpperCase()}</div>
+          <div class="email-avatar-icon">${(name || '?').charAt(0).toUpperCase()}</div>
           <div class="influencer-info">
-            <div class="influencer-name">${escHtml(name)} ${insta ? '<span style="color:var(--muted);font-weight:300;font-size:12px;">@' + escHtml(insta) + '</span>' : ''} ${saved ? '<span style="color:var(--accent);font-size:11px;">✓ ' + (uiLang === 'ko' ? '저장됨' : 'Saved') + '</span>' : ''}</div>
+            <div class="influencer-name">${escHtml(name || '이름 없음')} ${insta && insta !== 'N/A' && insta !== 'N/a' ? '<span style="color:var(--muted);font-weight:300;font-size:12px;">@' + escHtml(insta) + '</span>' : ''} ${saved ? '<span style="color:var(--accent);font-size:11px;">✓ ' + (uiLang === 'ko' ? '저장됨' : 'Saved') + '</span>' : ''}</div>
             <div class="influencer-email">${escHtml(email)}</div>
           </div>
-          <div style="font-size:11px;color:var(--muted);">${escHtml(r['City'] || '')}</div>
+          <div style="font-size:11px;color:var(--muted);">${escHtml(country)}</div>
         </div>
       </div>
       <div class="influencer-details" id="idetail-${i}">
@@ -695,13 +701,14 @@ function toggleInfluencer(i) {
 
 async function saveCampaignDraft(i) {
   const r = formResponses[i];
-  const email = r['Email'] || '';
+  const email = r['Email Address'] || r['Email'] || r['email'] || r['이메일'] || '';
+  const name = r['Full Name'] || r['Full name'] || r['full name'] || r['Name'] || r['이름'] || '';
   const template = document.getElementById('campaignTemplate').value;
   const activeLang = document.querySelector('#campaignLangGroup .toggle-btn.active')?.dataset.lang || 'en';
   const defaultSubject = activeLang === 'ko' ? '배송 정보 확인 요청' : 'Shipping Information Confirmation';
   const subject = document.getElementById('campaignSubject').value || defaultSubject;
-  const body = fillTemplate(template, r);
-  if (!email) { showToast('이메일 주소가 없습니다', 'error'); return; }
+  const body = fillTemplate(template, { ...r, 'Full Name': name, 'Email': email });
+  if (!email) { showToast(uiLang === 'ko' ? '이메일 주소가 없습니다' : 'No email address found', 'error'); return; }
   try {
     const encodedSubject = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
     const raw = btoa(unescape(encodeURIComponent(
@@ -716,7 +723,7 @@ async function saveCampaignDraft(i) {
     savedDrafts.add(email);
     saveDraftsToStorage();
     renderCampaignList();
-    showToast(uiLang === 'ko' ? `${r['Full Name']} 드래프트 저장 완료!` : `${r['Full Name']} draft saved!`, 'success');
+    showToast(uiLang === 'ko' ? `${name} 드래프트 저장 완료!` : `${name} draft saved!`, 'success');
   } catch(err) { showToast(err.message, 'error'); }
 }
 
