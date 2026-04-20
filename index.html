@@ -187,6 +187,14 @@
       <div class="setup-panel">
         <h3 id="txt-campaign-title">캠페인 이메일 설정</h3>
         <div class="input-group">
+          <label id="txt-sheet-id">스프레드시트 ID</label>
+          <input type="text" id="sheetIdInput" placeholder="Google Sheets ID" oninput="saveFormSettings()" />
+        </div>
+        <div class="input-group">
+          <label id="txt-form-url">구글폼 URL</label>
+          <input type="text" id="formUrlInput" placeholder="https://docs.google.com/forms/..." oninput="saveFormSettings()" />
+        </div>
+        <div class="input-group">
           <label id="txt-campaign-subject">이메일 제목</label>
           <input type="text" id="campaignSubject" placeholder="예: [Pestlo] 제품 발송 전 배송 정보 확인 요청" />
         </div>
@@ -218,7 +226,7 @@ Pestlo Team</textarea>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-primary" id="txt-campaign-fetch" onclick="fetchFormResponses()">📋 구글폼 응답 불러오기</button>
-          <a href="https://docs.google.com/forms/d/e/1FAIpQLSdaA6xcBD9y4OLsmPfGUW7yiHTKx8kizloQRWVkBxfcftGw7g/viewform?usp=header" target="_blank" class="btn btn-outline" id="txt-campaign-open">📝 구글폼 열기</a>
+          <a id="txt-campaign-open" href="#" target="_blank" class="btn btn-outline" onclick="openForm(event)">📝 구글폼 열기</a>
         </div>
       </div>
 
@@ -245,7 +253,8 @@ Pestlo Team</textarea>
 <script>
 const CLIENT_ID = '196065069577-qptcd7gr6r45jgopeqldahub56lu8d5a.apps.googleusercontent.com';
 const SCOPE = 'https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/spreadsheets.readonly';
-const SHEET_ID = '1KrOhq8spkNL2GA6Bo1fUxz4n5yaOM5Til6qK_snXRvk';
+let SHEET_ID = localStorage.getItem('mailmind_sheet_id') || '1KrOhq8spkNL2GA6Bo1fUxz4n5yaOM5Til6qK_snXRvk';
+let FORM_URL = localStorage.getItem('mailmind_form_url') || 'https://docs.google.com/forms/d/e/1FAIpQLSdaA6xcBD9y4OLsmPfGUW7yiHTKx8kizloQRWVkBxfcftGw7g/viewform?usp=header';
 
 let accessToken = '';
 let config = { tone: 'professional', lang: 'same' };
@@ -270,6 +279,7 @@ const i18n = {
     campaignAlldraft: '전체 드래프트 저장', campaignFetch: '📋 구글폼 응답 불러오기',
     campaignSubjectPlaceholder: '예: [Pestlo] 제품 발송 전 배송 정보 확인 요청',
     campaignLang: '이메일 언어', campaignOpen: '📝 구글폼 열기', selectAll: '전체 선택', saveSelected: '선택 드래프트 저장',
+    sheetId: '스프레드시트 ID', formUrl: '구글폼 URL',
   },
   en: {
     subtitle: 'AI Auto Reply', loginTitle: 'Get started with Gmail',
@@ -288,6 +298,7 @@ const i18n = {
     campaignAlldraft: 'Save All Drafts', campaignFetch: '📋 Load Form Responses',
     campaignSubjectPlaceholder: 'e.g. [Pestlo] Shipping Info Confirmation',
     campaignLang: 'Email Language', campaignOpen: '📝 Open Google Form', selectAll: 'Select All', saveSelected: 'Save Selected Drafts',
+    sheetId: 'Spreadsheet ID', formUrl: 'Google Form URL',
   }
 };
 
@@ -326,6 +337,8 @@ function setUiLang(lang) {
   document.getElementById('txt-campaign-open').textContent = t('campaignOpen');
   document.getElementById('txt-select-all').textContent = t('selectAll');
   document.getElementById('txt-campaign-alldraft').textContent = t('saveSelected');
+  document.getElementById('txt-sheet-id').textContent = t('sheetId');
+  document.getElementById('txt-form-url').textContent = t('formUrl');
   document.getElementById('campaignSubject').placeholder = t('campaignSubjectPlaceholder');
   renderEmails();
   if (formResponses.length > 0) renderCampaignList();
@@ -512,6 +525,7 @@ function handleOAuthCallback() {
     document.getElementById('statusDot').className = 'status-dot connected';
     getUserInfo();
     loadApiKey();
+    loadFormSettings();
   }
 }
 
@@ -555,6 +569,24 @@ function setCampaignLang(lang) {
   document.querySelector(`#campaignLangGroup [data-lang="${lang}"]`).classList.add('active');
   document.getElementById('campaignTemplate').value = campaignTemplates[lang];
   if (formResponses.length > 0) renderCampaignList();
+}
+
+function saveFormSettings() {
+  const sheetId = document.getElementById('sheetIdInput').value.trim();
+  const formUrl = document.getElementById('formUrlInput').value.trim();
+  if (sheetId) { SHEET_ID = sheetId; localStorage.setItem('mailmind_sheet_id', sheetId); }
+  if (formUrl) { FORM_URL = formUrl; localStorage.setItem('mailmind_form_url', formUrl); }
+}
+
+function loadFormSettings() {
+  document.getElementById('sheetIdInput').value = SHEET_ID;
+  document.getElementById('formUrlInput').value = FORM_URL;
+}
+
+function openForm(e) {
+  e.preventDefault();
+  if (FORM_URL) window.open(FORM_URL, '_blank');
+  else showToast(uiLang === 'ko' ? '구글폼 URL을 먼저 입력해주세요' : 'Please enter Google Form URL first', 'error');
 }
 
 // 탭 전환
