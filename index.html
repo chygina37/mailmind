@@ -567,7 +567,11 @@ function switchTab(tab) {
 
 // 구글폼 응답 불러오기
 let formResponses = [];
-let savedDrafts = new Set();
+let savedDrafts = new Set(JSON.parse(localStorage.getItem('mailmind_saved_drafts') || '[]'));
+
+function saveDraftsToStorage() {
+  localStorage.setItem('mailmind_saved_drafts', JSON.stringify([...savedDrafts]));
+}
 
 async function fetchFormResponses() {
   const btn = document.getElementById('txt-campaign-fetch');
@@ -614,7 +618,7 @@ function renderCampaignList() {
     const name = r['Full Name'] || r['full name'] || r['Name'] || r['이름'] || (keys.length > 1 ? r[keys[1]] : '') || '이름 없음';
     const email = r['Email'] || r['email'] || r['이메일'] || (keys.length > 0 ? r[keys[keys.length-1]] : '') || '';
     const insta = r['Instagram ID'] || r['instagram id'] || r['Instagram'] || '';
-    const saved = savedDrafts.has(i);
+    const saved = savedDrafts.has(email);
     return `
     <div class="influencer-card" id="icard-${i}" style="${saved ? 'border-color: var(--accent); opacity:0.7;' : ''}">
       <div class="influencer-header" style="gap:10px;">
@@ -677,7 +681,8 @@ async function saveCampaignDraft(i) {
       body: JSON.stringify({ message: { raw } })
     });
     if (!res.ok) throw new Error('저장 실패');
-    savedDrafts.add(i);
+    savedDrafts.add(email);
+    saveDraftsToStorage();
     renderCampaignList();
     showToast(uiLang === 'ko' ? `${r['Full Name']} 드래프트 저장 완료!` : `${r['Full Name']} draft saved!`, 'success');
   } catch(err) { showToast(err.message, 'error'); }
